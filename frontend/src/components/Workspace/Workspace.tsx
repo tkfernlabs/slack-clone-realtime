@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import ChannelView from './ChannelView';
+import DirectMessageView from './DirectMessageView';
 import ThreadView from './ThreadView';
-import { Workspace as WorkspaceType, Channel, Message } from '../../types';
+import { Workspace as WorkspaceType, Channel, Message, DirectMessage } from '../../types';
 import { workspaceApi, channelApi } from '../../services/api';
 import socketService from '../../services/socket';
 import toast from 'react-hot-toast';
@@ -13,6 +14,7 @@ const Workspace: React.FC = () => {
   const [workspace, setWorkspace] = useState<WorkspaceType | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [selectedDirectMessage, setSelectedDirectMessage] = useState<DirectMessage | null>(null);
   const [selectedThread, setSelectedThread] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,6 +63,13 @@ const Workspace: React.FC = () => {
 
   const handleChannelSelect = (channel: Channel) => {
     setSelectedChannel(channel);
+    setSelectedDirectMessage(null);
+    setSelectedThread(null);
+  };
+
+  const handleDirectMessageSelect = (dm: DirectMessage) => {
+    setSelectedDirectMessage(dm);
+    setSelectedChannel(null);
     setSelectedThread(null);
   };
 
@@ -95,22 +104,30 @@ const Workspace: React.FC = () => {
         workspace={workspace}
         channels={channels}
         selectedChannel={selectedChannel}
+        selectedDirectMessage={selectedDirectMessage}
         onChannelSelect={handleChannelSelect}
+        onDirectMessageSelect={handleDirectMessageSelect}
         onChannelCreated={handleChannelCreated}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex">
-        {/* Channel View */}
+        {/* Channel/DM View */}
         <div className={`flex-1 ${selectedThread ? 'border-r border-gray-300' : ''}`}>
           {selectedChannel ? (
             <ChannelView
               channel={selectedChannel}
               onThreadSelect={handleThreadSelect}
             />
+          ) : selectedDirectMessage ? (
+            <DirectMessageView
+              directMessage={selectedDirectMessage}
+              workspaceId={workspaceId || ''}
+              onThreadSelect={handleThreadSelect}
+            />
           ) : (
             <div className="h-full flex items-center justify-center text-gray-500">
-              Select a channel to start messaging
+              Select a channel or direct message to start messaging
             </div>
           )}
         </div>

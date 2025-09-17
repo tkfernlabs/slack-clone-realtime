@@ -15,7 +15,9 @@ interface SidebarProps {
   workspace: Workspace | null;
   channels: Channel[];
   selectedChannel: Channel | null;
+  selectedDirectMessage?: DirectMessage | null;
   onChannelSelect: (channel: Channel) => void;
+  onDirectMessageSelect?: (dm: DirectMessage) => void;
   onChannelCreated: (channel: Channel) => void;
 }
 
@@ -23,7 +25,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   workspace,
   channels,
   selectedChannel,
+  selectedDirectMessage,
   onChannelSelect,
+  onDirectMessageSelect,
   onChannelCreated,
 }) => {
   const { user, logout } = useAuth();
@@ -192,7 +196,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               {directMessages.map((dm) => (
                 <button
                   key={dm.channel_id}
-                  className="w-full flex items-center space-x-2 px-2 py-1 rounded text-left hover:bg-slate-700/30"
+                  onClick={() => onDirectMessageSelect?.(dm)}
+                  className={`w-full flex items-center space-x-2 px-2 py-1 rounded text-left hover:bg-slate-700/30 ${
+                    selectedDirectMessage?.channel_id === dm.channel_id ? 'bg-slack-active text-white' : ''
+                  }`}
                 >
                   <div className="relative">
                     <div className="w-5 h-5 bg-gray-600 rounded flex items-center justify-center text-white text-xs">

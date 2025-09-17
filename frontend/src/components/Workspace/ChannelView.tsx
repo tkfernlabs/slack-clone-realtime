@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Hash, Users, Pin, Info, Search, Star } from 'lucide-react';
+import { Hash, Users, Pin, Info, Search, Star, Phone } from 'lucide-react';
 import { Channel, Message } from '../../types';
 import { messageApi } from '../../services/api';
 import socketService from '../../services/socket';
+import webrtcService from '../../services/webrtc';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
+import { AudioCallModal } from '../AudioCallModal';
 import toast from 'react-hot-toast';
 
 interface ChannelViewProps {
@@ -16,6 +18,7 @@ const ChannelView: React.FC<ChannelViewProps> = ({ channel, onThreadSelect }) =>
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
+  const [showCallModal, setShowCallModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -53,6 +56,20 @@ const ChannelView: React.FC<ChannelViewProps> = ({ channel, onThreadSelect }) =>
   };
 
   const setupSocketListeners = () => {
+    // Set up WebRTC service with socket
+    const socket = socketService.getSocket();
+    if (socket) {
+      webrtcService.setSocket(socket);
+    }
+
+    // Listen for incoming calls
+    const handleCallStateChange = (state: any) => {
+      if (state.status === 'ringing') {
+        setShowCallModal(true);
+      }
+    };
+    webrtcService.setOnStateChange(handleCallStateChange);
+
     socketService.on('new_message', handleNewMessage);
     socketService.on('message_edited', handleMessageEdited);
     socketService.on('message_deleted', handleMessageDeleted);
@@ -258,6 +275,17 @@ const ChannelView: React.FC<ChannelViewProps> = ({ channel, onThreadSelect }) =>
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleStartCall = async () => {
+    try {
+      // For group calls in channels, we need to implement channel-wide calls
+      // For now, let's show a toast that this feature is coming soon
+      toast('Group calls in channels coming soon! Try calling a user directly from DMs.');
+    } catch (error) {
+      console.error('Error starting call:', error);
+      toast.error('Failed to start call');
+    }
+  };
+
   const typingUsersArray = Array.from(typingUsers.values());
 
   return (
@@ -282,6 +310,13 @@ const ChannelView: React.FC<ChannelViewProps> = ({ channel, onThreadSelect }) =>
         </div>
         
         <div className="flex items-center space-x-2">
+          <button 
+            onClick={handleStartCall}
+            className="p-1.5 hover:bg-gray-100 rounded text-gray-600"
+            title="Start audio call"
+          >
+            <Phone className="w-5 h-5" />
+          </button>
           <button className="p-1.5 hover:bg-gray-100 rounded text-gray-600">
             <Star className="w-5 h-5" />
           </button>
@@ -349,6 +384,12 @@ const ChannelView: React.FC<ChannelViewProps> = ({ channel, onThreadSelect }) =>
         channelName={channel.name}
         onSendMessage={handleSendMessage}
         channelId={channel.id}
+      />
+
+      {/* Audio Call Modal */}
+      <AudioCallModal
+        isOpen={showCallModal}
+        onClose={() => setShowCallModal(false)}
       />
     </div>
   );

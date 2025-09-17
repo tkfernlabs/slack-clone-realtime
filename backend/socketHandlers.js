@@ -1,4 +1,5 @@
 const db = require('./db');
+const setupCallHandlers = require('./callHandlers');
 
 const setupSocketHandlers = (io) => {
   // Store user socket mappings
@@ -447,6 +448,9 @@ const setupSocketHandlers = (io) => {
         console.error('Mark read error:', error);
       }
     });
+
+    // Setup call handlers
+    setupCallHandlers(io, socket, userSockets);
 
     // Disconnect
     socket.on('disconnect', async () => {

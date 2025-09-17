@@ -76,6 +76,7 @@ export interface DirectMessage {
   other_display_name: string;
   other_avatar_url?: string;
   other_status: string;
+  other_status_message?: string;
   other_is_online: boolean;
   last_message?: string;
   unread_count: string;
