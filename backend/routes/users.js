@@ -270,43 +270,46 @@ router.get('/direct-messages/:workspaceId', authMiddleware, async (req, res) => 
 
     // Get all DM channels where the user is a member
     const dms = await db.query(
-      `SELECT DISTINCT
-        c.id as channel_id,
-        c.name,
-        c.updated_at,
-        c.created_at as dm_created_at,
-        CASE 
-          WHEN cm2.user_id != $2 THEN cm2.user_id
-          ELSE cm1.user_id
-        END as other_user_id,
+      `WITH dm_info AS (
+        SELECT 
+          c.id as channel_id,
+          c.name,
+          c.updated_at,
+          c.created_at as dm_created_at,
+          other_member.user_id as other_user_id,
+          cm.last_read_at,
+          (SELECT MAX(created_at) FROM messages WHERE channel_id = c.id) as last_message_time
+        FROM channels c
+        JOIN channel_members cm ON cm.channel_id = c.id AND cm.user_id = $2
+        JOIN channel_members other_member ON other_member.channel_id = c.id AND other_member.user_id != $2
+        WHERE c.workspace_id = $1 
+        AND c.is_direct = true
+      )
+      SELECT 
+        di.channel_id,
+        di.name,
+        di.updated_at,
+        di.dm_created_at,
+        di.other_user_id,
         u.username as other_username,
         u.display_name as other_display_name,
         u.avatar_url as other_avatar_url,
         u.status as other_status,
         u.status_message as other_status_message,
         u.is_online as other_is_online,
-        cm_current.last_read_at,
+        di.last_read_at,
         (SELECT COUNT(*) 
          FROM messages m 
-         WHERE m.channel_id = c.id 
-         AND m.created_at > COALESCE(cm_current.last_read_at, '1970-01-01'::timestamp)) as unread_count,
+         WHERE m.channel_id = di.channel_id 
+         AND m.created_at > COALESCE(di.last_read_at, '1970-01-01'::timestamp)) as unread_count,
         (SELECT content 
          FROM messages 
-         WHERE channel_id = c.id 
+         WHERE channel_id = di.channel_id 
          ORDER BY created_at DESC 
          LIMIT 1) as last_message
-       FROM channels c
-       JOIN channel_members cm1 ON cm1.channel_id = c.id
-       JOIN channel_members cm2 ON cm2.channel_id = c.id AND cm2.user_id != cm1.user_id
-       JOIN users u ON u.id = cm2.user_id
-       LEFT JOIN channel_members cm_current ON cm_current.channel_id = c.id AND cm_current.user_id = $2
-       WHERE c.workspace_id = $1 
-       AND c.is_direct = true
-       AND cm1.user_id = $2
-       ORDER BY COALESCE(
-         (SELECT MAX(created_at) FROM messages WHERE channel_id = c.id),
-         c.created_at
-       ) DESC NULLS LAST`,
+       FROM dm_info di
+       JOIN users u ON u.id = di.other_user_id
+       ORDER BY COALESCE(di.last_message_time, di.dm_created_at) DESC NULLS LAST`,
       [workspaceId, userId]
     );
 

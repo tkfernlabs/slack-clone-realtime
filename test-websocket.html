@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    
+    <script>
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlNTA0ZjZiYi1iYzFiLTRjMjItYjFhMi1lYTA2ODdmYWI0NzkiLCJ1c2VybmFtZSI6InRlc3R1c2VyXzE3NTgxNDAwNTMiLCJlbWFpbCI6InRlc3QxNzU4MTQwMDUzQGV4YW1wbGUuY29tIiwiaWF0IjoxNzU4MTQwMDU0LCJleHAiOjE3NTg3NDQ4NTR9.C6alQDsIf5u8z9_N8kKYRfvHD6nnl9CiRDeiNePRGXg";
+        
+        const socket = io('https://slack-backend-morphvm-4yh44846.http.cloud.morph.so', {
+            auth: {
+                token: token
+            }
+        });
+        
+        socket.on('connect', () => {
+            document.getElementById('status').innerHTML = '✅ Connected to WebSocket server';
+            console.log('Connected with socket ID:', socket.id);
+        });
+        
+        socket.on('error', (error) => {
+            document.getElementById('status').innerHTML = '❌ Connection error: ' + error;
+            console.error('Socket error:', error);
+        });
+        
+        socket.on('disconnect', () => {
+            document.getElementById('status').innerHTML = '⚠️ Disconnected from server';
+        });
+        
+        // Test various events
+        socket.on('joined_workspace', (data) => {
+            document.getElementById('messages').innerHTML += '<p>✅ Joined workspace: ' + JSON.stringify(data) + '</p>';
+        });
+        
+        socket.on('new_message', (data) => {
+            document.getElementById('messages').innerHTML += '<p>📨 New message received</p>';
+        });
+        
+        socket.on('call:incoming', (data) => {
+            document.getElementById('messages').innerHTML += '<p>📞 Incoming call from: ' + JSON.stringify(data.caller) + '</p>';
+        });
+    </script>
+</body>
+</html>
