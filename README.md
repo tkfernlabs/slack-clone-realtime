@@ -26,6 +26,14 @@ A full-featured Slack clone with real-time messaging, workspaces, channels, and 
 - **Message Editing/Deletion**: Edit or delete your messages
 - **Typing Indicators**: See when others are typing
 
+### Communication Features
+- **🎙️ Audio Calls**: Make 1-on-1 audio calls with WebRTC technology
+- **Call Controls**: Mute/unmute, accept/reject calls
+- **Call Duration**: Real-time call duration tracking
+- **Call Status**: See ringing, connected, and ended states
+- **Peer-to-Peer**: Direct P2P connection for low latency
+- **Coming Soon**: Video calls and group calling
+
 ### User Features
 - **User Profiles**: Customizable display names and avatars
 - **Online Presence**: See who's online in real-time
