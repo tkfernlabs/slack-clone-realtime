@@ -7,6 +7,7 @@ import {
 import { Workspace, Channel, DirectMessage } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { userApi } from '../../services/api';
+import socketService from '../../services/socket';
 import CreateChannelModal from './CreateChannelModal';
 import UserProfileModal from './UserProfileModal';
 import InviteModal from './InviteModal';
@@ -43,6 +44,26 @@ const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (workspace) {
       loadDirectMessages();
+      // Reload DMs every 30 seconds to keep them fresh
+      const interval = setInterval(loadDirectMessages, 30000);
+      
+      // Listen for new messages to update DM list
+      const handleNewMessage = (message: any) => {
+        // Reload DMs when a new message arrives in a DM channel
+        if (message.channel_id) {
+          loadDirectMessages();
+        }
+      };
+      
+      // Subscribe to socket events
+      socketService.on('new_message', handleNewMessage);
+      socketService.on('dm_created', loadDirectMessages);
+      
+      return () => {
+        clearInterval(interval);
+        socketService.off('new_message', handleNewMessage);
+        socketService.off('dm_created', loadDirectMessages);
+      };
     }
   }, [workspace]);
 

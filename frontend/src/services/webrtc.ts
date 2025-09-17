@@ -6,7 +6,7 @@ export interface CallConfig {
 
 export interface CallState {
   callId: string;
-  status: 'idle' | 'calling' | 'ringing' | 'connected' | 'ended';
+  status: 'idle' | 'calling' | 'ringing' | 'connecting' | 'connected' | 'ended';
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   isMuted: boolean;
@@ -78,9 +78,22 @@ class WebRTCService {
       });
     });
 
+    // Call initiated response
+    this.socket.on('call:initiated', async (data: any) => {
+      console.log('Call initiated response:', data);
+      // Store recipient info if available
+      if (data.recipientId) {
+        this.updateState({ recipient: { id: data.recipientId } });
+      }
+    });
+    
     // Call accepted by recipient
     this.socket.on('call:accepted', async (data: any) => {
       console.log('Call accepted:', data);
+      // Store the accepting user ID for WebRTC signaling
+      if (data.acceptedBy) {
+        this.updateState({ recipient: { id: data.acceptedBy } });
+      }
       await this.createOffer();
     });
 
@@ -126,11 +139,16 @@ class WebRTCService {
 
   async initiateCall(targetUserId: string, channelId?: string, workspaceId?: string): Promise<void> {
     try {
+      console.log('Initiating call to user:', targetUserId);
+      
       // Get local audio stream
       this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Store the recipient ID for later use
       this.updateState({
         status: 'calling',
-        localStream: this.localStream
+        localStream: this.localStream,
+        recipient: { id: targetUserId }
       });
 
       // Setup peer connection
@@ -150,6 +168,8 @@ class WebRTCService {
         workspaceId,
         callType: 'audio'
       });
+      
+      console.log('Call initiation sent');
 
     } catch (error) {
       console.error('Error initiating call:', error);
@@ -160,10 +180,12 @@ class WebRTCService {
 
   async acceptCall(): Promise<void> {
     try {
+      console.log('Accepting call:', this.callState.callId);
+      
       // Get local audio stream
       this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.updateState({
-        status: 'connected',
+        status: 'connecting',
         localStream: this.localStream
       });
 
@@ -179,9 +201,10 @@ class WebRTCService {
 
       // Send accept signal
       this.socket?.emit('call:accept', { callId: this.callState.callId });
+      
+      console.log('Call accept sent');
 
-      // Start call timer
-      this.startCallTimer();
+      // Don't start timer here, wait for connection
 
     } catch (error) {
       console.error('Error accepting call:', error);
@@ -273,11 +296,14 @@ class WebRTCService {
       const targetUserId = this.callState.caller?.id || this.callState.recipient?.id;
       
       if (targetUserId) {
+        console.log('Sending ICE candidate to:', targetUserId);
         this.socket.emit('webrtc:ice-candidate', {
           targetUserId,
           candidate: event.candidate,
           callId: this.callState.callId
         });
+      } else {
+        console.warn('No target user ID available for ICE candidate');
       }
     }
   }

@@ -107,11 +107,14 @@ const ThreadView: React.FC<ThreadViewProps> = ({ parentMessage, onClose }) => {
 
   const handleSendReply = async (content: string) => {
     try {
-      await messageApi.sendMessage({
+      // Use socket to send the message for real-time updates
+      socketService.sendMessage({
         channel_id: parentMessage.channel_id,
         content,
         parent_message_id: parentMessage.id,
       });
+      
+      // The reply will be received through the socket listeners
     } catch (error) {
       console.error('Error sending reply:', error);
       toast.error('Failed to send reply');

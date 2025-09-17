@@ -5,6 +5,8 @@ const setupCallHandlers = (io, socket, userSockets) => {
   socket.on('call:initiate', async (data) => {
     const { targetUserId, channelId, workspaceId, callType = 'audio' } = data;
     
+    console.log(`Call initiation request from ${socket.userId} to ${targetUserId}`);
+    
     try {
       // Create call record in database
       const callResult = await db.query(
@@ -15,6 +17,7 @@ const setupCallHandlers = (io, socket, userSockets) => {
       );
       
       const call = callResult.rows[0];
+      console.log(`Call record created with ID: ${call.id}`);
       
       // Get caller info
       const callerResult = await db.query(
@@ -25,6 +28,7 @@ const setupCallHandlers = (io, socket, userSockets) => {
       
       // Check if recipient is online
       const targetSocketId = userSockets.get(targetUserId);
+      console.log(`Target user ${targetUserId} socket: ${targetSocketId}`);
       
       if (targetSocketId) {
         // Send incoming call notification to recipient
@@ -36,6 +40,8 @@ const setupCallHandlers = (io, socket, userSockets) => {
           callType
         });
         
+        console.log(`Sent incoming call notification to ${targetUserId}`);
+        
         // Notify caller that call is initiated
         socket.emit('call:initiated', {
           callId: call.id,
@@ -44,6 +50,7 @@ const setupCallHandlers = (io, socket, userSockets) => {
         });
       } else {
         // Recipient is offline
+        console.log(`Recipient ${targetUserId} is offline`);
         socket.emit('call:recipient_unavailable', {
           recipientId: targetUserId,
           reason: 'offline'
@@ -57,7 +64,7 @@ const setupCallHandlers = (io, socket, userSockets) => {
       }
     } catch (error) {
       console.error('Error initiating call:', error);
-      socket.emit('call:error', { message: 'Failed to initiate call' });
+      socket.emit('call:error', { message: 'Failed to initiate call', error: error.message });
     }
   });
   
