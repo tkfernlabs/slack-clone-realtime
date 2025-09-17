@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import InviteAccept from './components/Auth/InviteAccept';
 import WorkspaceList from './components/Workspace/WorkspaceList';
 import Workspace from './components/Workspace/Workspace';
 
@@ -32,6 +33,7 @@ const AppRoutes: React.FC = () => {
       />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/invite/:inviteCode" element={<InviteAccept />} />
       <Route
         path="/workspace"
         element={

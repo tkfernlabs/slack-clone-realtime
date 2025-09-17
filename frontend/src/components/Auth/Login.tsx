@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { Hash } from 'lucide-react';
@@ -10,6 +10,16 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if there's an invite parameter in the URL
+    const urlParams = new URLSearchParams(location.search);
+    const inviteCode = urlParams.get('invite');
+    if (inviteCode) {
+      localStorage.setItem('pendingInvite', inviteCode);
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +28,14 @@ const Login: React.FC = () => {
     try {
       await login(email, password);
       toast.success('Welcome back!');
-      navigate('/workspace');
+      
+      // Check if there's a pending invite
+      const pendingInvite = localStorage.getItem('pendingInvite');
+      if (pendingInvite) {
+        navigate(`/invite/${pendingInvite}`);
+      } else {
+        navigate('/workspace');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {
@@ -38,7 +55,9 @@ const Login: React.FC = () => {
           Sign in to Slack
         </h1>
         <p className="mt-2 text-center text-gray-600">
-          We suggest using the email address you use at work
+          {localStorage.getItem('pendingInvite') 
+            ? 'Sign in to accept your workspace invitation'
+            : 'We suggest using the email address you use at work'}
         </p>
       </div>
 

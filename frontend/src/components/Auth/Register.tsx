@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { Hash } from 'lucide-react';
@@ -14,6 +14,16 @@ const Register: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if there's an invite parameter in the URL
+    const urlParams = new URLSearchParams(location.search);
+    const inviteCode = urlParams.get('invite');
+    if (inviteCode) {
+      localStorage.setItem('pendingInvite', inviteCode);
+    }
+  }, [location]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -29,7 +39,14 @@ const Register: React.FC = () => {
     try {
       await register(formData);
       toast.success('Account created successfully!');
-      navigate('/workspace');
+      
+      // Check if there's a pending invite
+      const pendingInvite = localStorage.getItem('pendingInvite');
+      if (pendingInvite) {
+        navigate(`/invite/${pendingInvite}`);
+      } else {
+        navigate('/workspace');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
     } finally {
