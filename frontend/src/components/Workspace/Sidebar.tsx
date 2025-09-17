@@ -46,14 +46,17 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (!workspace) return;
       
       try {
+        console.log('[useEffect] Loading DMs for workspace:', workspace.id);
         const response = await userApi.getDirectMessages(workspace.id);
-        setDirectMessages(response.data);
+        console.log('[useEffect] DM response:', response.data);
+        setDirectMessages(response.data || []);
       } catch (error) {
-        console.error('Error loading DMs:', error);
+        console.error('[useEffect] Error loading DMs:', error);
       }
     };
     
     if (workspace) {
+      console.log('[useEffect] Workspace available, loading DMs');
       loadDMs();
       // Reload DMs every 30 seconds to keep them fresh
       const interval = setInterval(loadDMs, 30000);
@@ -82,11 +85,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (!workspace) return;
     
     try {
+      console.log('Loading DMs for workspace:', workspace.id);
       const response = await userApi.getDirectMessages(workspace.id);
-      console.log('Loaded DMs:', response.data);
-      setDirectMessages(response.data);
-    } catch (error) {
+      console.log('DM API response:', response);
+      console.log('DMs data:', response.data);
+      
+      // Ensure we have an array
+      const dms = Array.isArray(response.data) ? response.data : [];
+      setDirectMessages(dms);
+      console.log('Set DMs in state:', dms);
+    } catch (error: any) {
       console.error('Error loading DMs:', error);
+      console.error('Error response:', error.response?.data);
     }
   };
 
