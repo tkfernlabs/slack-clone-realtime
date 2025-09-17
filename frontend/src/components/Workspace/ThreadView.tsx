@@ -101,7 +101,20 @@ const ThreadView: React.FC<ThreadViewProps> = ({ parentMessage, onClose }) => {
 
   const handleThreadUpdated = (data: { message_id: string; new_reply: Message }) => {
     if (data.message_id === parentMessage.id) {
-      loadThread();
+      // Add the new reply directly instead of reloading
+      setThread(prev => {
+        if (!prev) return null;
+        
+        // Check if the reply already exists to avoid duplicates
+        const replyExists = prev.replies.some(r => r.id === data.new_reply.id);
+        if (!replyExists) {
+          return {
+            ...prev,
+            replies: [...prev.replies, data.new_reply]
+          };
+        }
+        return prev;
+      });
     }
   };
 

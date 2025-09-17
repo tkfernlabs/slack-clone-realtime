@@ -334,21 +334,31 @@ class WebRTCService {
   }
 
   private async createOffer(): Promise<void> {
-    if (!this.peerConnection) return;
+    if (!this.peerConnection) {
+      console.error('No peer connection available for creating offer');
+      return;
+    }
 
     try {
-      const offer = await this.peerConnection.createOffer();
+      console.log('Creating WebRTC offer...');
+      const offer = await this.peerConnection.createOffer({
+        offerToReceiveAudio: true
+      });
       await this.peerConnection.setLocalDescription(offer);
+      console.log('Local description set with offer');
 
       // Determine target user ID
-      const targetUserId = this.callState.recipient?.id;
+      const targetUserId = this.callState.recipient?.id || this.callState.caller?.id;
       
       if (targetUserId && this.socket) {
+        console.log('Sending offer to user:', targetUserId);
         this.socket.emit('webrtc:offer', {
           targetUserId,
           offer,
           callId: this.callState.callId
         });
+      } else {
+        console.error('Cannot send offer: No target user ID or socket');
       }
     } catch (error) {
       console.error('Error creating offer:', error);
@@ -357,20 +367,31 @@ class WebRTCService {
   }
 
   private async handleOffer(offer: RTCSessionDescriptionInit, fromUserId: string): Promise<void> {
-    if (!this.peerConnection) return;
+    if (!this.peerConnection) {
+      console.error('No peer connection available for handling offer');
+      return;
+    }
 
     try {
+      console.log('Handling WebRTC offer from user:', fromUserId);
       await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      console.log('Remote description set with offer');
+      
       const answer = await this.peerConnection.createAnswer();
       await this.peerConnection.setLocalDescription(answer);
+      console.log('Local description set with answer');
 
       if (this.socket) {
+        console.log('Sending answer to user:', fromUserId);
         this.socket.emit('webrtc:answer', {
           targetUserId: fromUserId,
           answer,
           callId: this.callState.callId
         });
       }
+      
+      // Update state to indicate we're connecting
+      this.updateState({ status: 'connecting', recipient: { id: fromUserId } });
     } catch (error) {
       console.error('Error handling offer:', error);
       this.endCall();

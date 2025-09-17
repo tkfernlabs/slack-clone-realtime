@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Search, MessageCircle, Circle } from 'lucide-react';
 import { userApi } from '../../services/api';
 import { User, DirectMessage } from '../../types';
+import socketService from '../../services/socket';
 import toast from 'react-hot-toast';
 
 interface DirectMessageModalProps {
@@ -63,6 +64,12 @@ const DirectMessageModal: React.FC<DirectMessageModalProps> = ({
       };
 
       toast.success(`Direct message with ${targetUser.display_name} created`);
+      
+      // Emit an event to notify other components
+      if (socketService.getSocket()) {
+        socketService.getSocket()?.emit('dm_created', { dm });
+      }
+      
       onDirectMessageCreated(dm);
       onClose();
     } catch (error) {
