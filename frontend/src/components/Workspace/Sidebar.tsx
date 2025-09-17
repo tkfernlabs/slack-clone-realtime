@@ -10,6 +10,7 @@ import { userApi } from '../../services/api';
 import CreateChannelModal from './CreateChannelModal';
 import UserProfileModal from './UserProfileModal';
 import InviteModal from './InviteModal';
+import DirectMessageModal from './DirectMessageModal';
 
 interface SidebarProps {
   workspace: Workspace | null;
@@ -36,6 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showDirectMessageModal, setShowDirectMessageModal] = useState(false);
   const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
 
   useEffect(() => {
@@ -185,7 +187,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               <ChevronDown className={`w-3 h-3 transition-transform ${!showDirectMessages ? '-rotate-90' : ''}`} />
               <span>Direct messages</span>
             </button>
-            <button className="hover:bg-slate-700/30 rounded p-1">
+            <button 
+              onClick={() => setShowDirectMessageModal(true)}
+              className="hover:bg-slate-700/30 rounded p-1"
+              title="Start a new direct message"
+            >
               <Plus className="w-4 h-4" />
             </button>
           </div>
@@ -259,6 +265,17 @@ const Sidebar: React.FC<SidebarProps> = ({
           workspaceName={workspace.name}
           isOpen={showInviteModal}
           onClose={() => setShowInviteModal(false)}
+        />
+      )}
+
+      {showDirectMessageModal && workspace && (
+        <DirectMessageModal
+          workspaceId={workspace.id}
+          onClose={() => setShowDirectMessageModal(false)}
+          onDirectMessageCreated={(dm) => {
+            setDirectMessages(prev => [dm, ...prev]);
+            onDirectMessageSelect?.(dm);
+          }}
         />
       )}
     </>

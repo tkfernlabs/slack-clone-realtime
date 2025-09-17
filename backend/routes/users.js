@@ -177,65 +177,88 @@ router.post('/direct-message', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Cannot create DM with yourself' });
     }
 
-    // Ensure consistent ordering
-    const user1 = userId < target_user_id ? userId : target_user_id;
-    const user2 = userId < target_user_id ? target_user_id : userId;
+    // Ensure consistent ordering for UUIDs (lexicographical comparison)
+    const user1 = userId.toString() < target_user_id.toString() ? userId : target_user_id;
+    const user2 = userId.toString() < target_user_id.toString() ? target_user_id : userId;
 
-    // Check if DM already exists
-    let dm = await db.query(
-      `SELECT dm.*, c.id as channel_id 
-       FROM direct_messages dm 
-       JOIN channels c ON c.workspace_id = dm.workspace_id 
-       WHERE dm.workspace_id = $1 AND dm.user1_id = $2 AND dm.user2_id = $3 
+    // Check if DM already exists - look for existing channel
+    let existingChannel = await db.query(
+      `SELECT c.*, 
+        CASE WHEN $2 = $3 THEN $4 ELSE $3 END as other_user_id
+       FROM channels c
+       WHERE c.workspace_id = $1 
        AND c.is_direct = true 
-       AND c.name = CONCAT('dm-', $2::text, '-', $3::text)`,
-      [workspace_id, user1, user2]
+       AND c.name = $5`,
+      [workspace_id, userId, user1, user2, `dm-${user1}-${user2}`]
     );
 
-    if (dm.rows.length === 0) {
-      // Create DM record
-      await db.query(
+    let channel;
+    let dm;
+
+    if (existingChannel.rows.length > 0) {
+      channel = existingChannel.rows[0];
+      
+      // Check if direct_messages record exists
+      dm = await db.query(
+        `SELECT * FROM direct_messages 
+         WHERE workspace_id = $1 AND user1_id = $2 AND user2_id = $3`,
+        [workspace_id, user1, user2]
+      );
+
+      if (dm.rows.length === 0) {
+        // Create the direct_messages record if it doesn't exist
+        dm = await db.query(
+          `INSERT INTO direct_messages (workspace_id, user1_id, user2_id) 
+           VALUES ($1, $2, $3)
+           RETURNING *`,
+          [workspace_id, user1, user2]
+        );
+      }
+    } else {
+      // Create DM record first
+      dm = await db.query(
         `INSERT INTO direct_messages (workspace_id, user1_id, user2_id) 
-         VALUES ($1, $2, $3)`,
+         VALUES ($1, $2, $3)
+         ON CONFLICT (workspace_id, user1_id, user2_id) DO NOTHING
+         RETURNING *`,
         [workspace_id, user1, user2]
       );
 
       // Create channel for DM
-      const channel = await db.query(
+      channel = await db.query(
         `INSERT INTO channels (workspace_id, name, is_private, is_direct, created_by) 
          VALUES ($1, $2, true, true, $3) 
          RETURNING *`,
-        [`${workspace_id}`, `dm-${user1}-${user2}`, userId]
+        [workspace_id, `dm-${user1}-${user2}`, userId]
       );
+      channel = channel.rows[0];
 
       // Add both users as members
       await db.query(
-        `INSERT INTO channel_members (channel_id, user_id) VALUES ($1, $2), ($1, $3)`,
-        [channel.rows[0].id, user1, user2]
-      );
-
-      dm = await db.query(
-        `SELECT dm.*, $4 as channel_id 
-         FROM direct_messages dm 
-         WHERE dm.workspace_id = $1 AND dm.user1_id = $2 AND dm.user2_id = $3`,
-        [workspace_id, user1, user2, channel.rows[0].id]
+        `INSERT INTO channel_members (channel_id, user_id) 
+         VALUES ($1, $2), ($1, $3)
+         ON CONFLICT (channel_id, user_id) DO NOTHING`,
+        [channel.id, userId, target_user_id]
       );
     }
 
     // Get other user's info
     const otherUser = await db.query(
-      `SELECT id, username, display_name, avatar_url, status, is_online 
+      `SELECT id, username, display_name, avatar_url, status, status_message, is_online 
        FROM users WHERE id = $1`,
       [target_user_id]
     );
 
     res.json({
-      ...dm.rows[0],
-      other_user: otherUser.rows[0]
+      channel_id: channel.id || channel.channel_id,
+      workspace_id,
+      other_user_id: target_user_id,
+      other_user: otherUser.rows[0],
+      created_at: dm.rows[0]?.created_at || new Date()
     });
   } catch (error) {
     console.error('Create DM error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
@@ -245,50 +268,52 @@ router.get('/direct-messages/:workspaceId', authMiddleware, async (req, res) => 
     const { workspaceId } = req.params;
     const userId = req.userId;
 
+    // Get all DM channels where the user is a member
     const dms = await db.query(
-      `SELECT 
+      `SELECT DISTINCT
         c.id as channel_id,
         c.name,
         c.updated_at,
-        dm.created_at as dm_created_at,
+        c.created_at as dm_created_at,
         CASE 
-          WHEN dm.user1_id = $2 THEN dm.user2_id 
-          ELSE dm.user1_id 
+          WHEN cm2.user_id != $2 THEN cm2.user_id
+          ELSE cm1.user_id
         END as other_user_id,
         u.username as other_username,
         u.display_name as other_display_name,
         u.avatar_url as other_avatar_url,
         u.status as other_status,
+        u.status_message as other_status_message,
         u.is_online as other_is_online,
-        cm.last_read_at,
+        cm_current.last_read_at,
         (SELECT COUNT(*) 
          FROM messages m 
          WHERE m.channel_id = c.id 
-         AND m.created_at > cm.last_read_at) as unread_count,
+         AND m.created_at > COALESCE(cm_current.last_read_at, '1970-01-01'::timestamp)) as unread_count,
         (SELECT content 
          FROM messages 
          WHERE channel_id = c.id 
          ORDER BY created_at DESC 
          LIMIT 1) as last_message
-       FROM direct_messages dm
-       JOIN channels c ON c.workspace_id = dm.workspace_id 
-         AND c.is_direct = true 
-         AND c.name = CONCAT('dm-', dm.user1_id::text, '-', dm.user2_id::text)
-       JOIN users u ON u.id = CASE 
-         WHEN dm.user1_id = $2 THEN dm.user2_id 
-         ELSE dm.user1_id 
-       END
-       LEFT JOIN channel_members cm ON cm.channel_id = c.id AND cm.user_id = $2
-       WHERE dm.workspace_id = $1 
-       AND (dm.user1_id = $2 OR dm.user2_id = $2)
-       ORDER BY c.updated_at DESC`,
+       FROM channels c
+       JOIN channel_members cm1 ON cm1.channel_id = c.id
+       JOIN channel_members cm2 ON cm2.channel_id = c.id AND cm2.user_id != cm1.user_id
+       JOIN users u ON u.id = cm2.user_id
+       LEFT JOIN channel_members cm_current ON cm_current.channel_id = c.id AND cm_current.user_id = $2
+       WHERE c.workspace_id = $1 
+       AND c.is_direct = true
+       AND cm1.user_id = $2
+       ORDER BY COALESCE(
+         (SELECT MAX(created_at) FROM messages WHERE channel_id = c.id),
+         c.created_at
+       ) DESC NULLS LAST`,
       [workspaceId, userId]
     );
 
     res.json(dms.rows);
   } catch (error) {
     console.error('Get DMs error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
