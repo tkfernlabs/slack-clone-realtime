@@ -175,8 +175,10 @@ router.post('/:workspaceId/invite', authMiddleware, async (req, res) => {
 
     // Check if user is admin/owner
     const membership = await db.query(
-      'SELECT * FROM workspace_members WHERE workspace_id = $1 AND user_id = $2 AND role IN ($3, $4)',
-      [workspaceId, userId, 'owner', 'admin']
+      `SELECT * FROM workspace_members 
+       WHERE workspace_id = $1 AND user_id = $2 
+       AND (role = 'owner' OR role = 'admin')`,
+      [workspaceId, userId]
     );
 
     if (membership.rows.length === 0) {
@@ -185,8 +187,13 @@ router.post('/:workspaceId/invite', authMiddleware, async (req, res) => {
 
     // Generate unique invite code
     const inviteCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + expires_in_days);
+    
+    // Handle expiration - if 0, set to null (never expires)
+    let expiresAt = null;
+    if (expires_in_days && expires_in_days > 0) {
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + expires_in_days);
+    }
 
     // Create invite
     const invite = await db.query(
@@ -215,8 +222,10 @@ router.get('/:workspaceId/invites', authMiddleware, async (req, res) => {
 
     // Check if user is admin/owner
     const membership = await db.query(
-      'SELECT * FROM workspace_members WHERE workspace_id = $1 AND user_id = $2 AND role IN ($3, $4)',
-      [workspaceId, userId, 'owner', 'admin']
+      `SELECT * FROM workspace_members 
+       WHERE workspace_id = $1 AND user_id = $2 
+       AND (role = 'owner' OR role = 'admin')`,
+      [workspaceId, userId]
     );
 
     if (membership.rows.length === 0) {
@@ -313,8 +322,10 @@ router.delete('/:workspaceId/invites/:inviteId', authMiddleware, async (req, res
 
     // Check if user is admin/owner
     const membership = await db.query(
-      'SELECT * FROM workspace_members WHERE workspace_id = $1 AND user_id = $2 AND role IN ($3, $4)',
-      [workspaceId, userId, 'owner', 'admin']
+      `SELECT * FROM workspace_members 
+       WHERE workspace_id = $1 AND user_id = $2 
+       AND (role = 'owner' OR role = 'admin')`,
+      [workspaceId, userId]
     );
 
     if (membership.rows.length === 0) {
