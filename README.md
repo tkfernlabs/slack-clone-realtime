@@ -2,6 +2,16 @@
 
 A full-featured Slack clone with real-time messaging, channels, direct messages, and more.
 
+## 🚀 Live Demo
+
+- **Frontend**: https://slack-frontend-morphvm-4yh44846.http.cloud.morph.so
+- **Backend API**: https://slack-backend-morphvm-4yh44846.http.cloud.morph.so
+
+## 🎯 Test Account
+
+- **Email**: demo@example.com
+- **Password**: password123
+
 ## Features
 
 - **Real-time Messaging**: Instant message delivery using Socket.IO
@@ -121,13 +131,32 @@ REACT_APP_API_URL=your_backend_url
 REACT_APP_WS_URL=your_websocket_url
 ```
 
+## 🎉 New Features & Fixes
+
+### Workspace Invites
+- Generate invite links with customizable expiry dates (1-30 days or never)
+- Set maximum usage limits for invite links
+- Track invite usage and manage active invites
+- Accessible via "Invite people" button in the sidebar
+
+### Real-time Messaging Improvements
+- Messages now sent via Socket.IO for instant updates
+- Fixed message synchronization issues
+- Optimized WebSocket connections for better performance
+
+### Recent Bug Fixes
+- Fixed SQL parameter binding errors in invite system
+- Resolved CORS issues between frontend and backend
+- Improved real-time message delivery without page refresh
+- Fixed invite generation with proper expiry handling
+
 ## Deployment
 
 ### Backend
 The backend is deployed at: https://slack-backend-morphvm-4yh44846.http.cloud.morph.so
 
 ### Frontend
-The frontend will be deployed at: [Coming soon]
+The frontend is deployed at: https://slack-frontend-morphvm-4yh44846.http.cloud.morph.so
 
 ## Getting Started
 
