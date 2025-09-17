@@ -1,206 +1,223 @@
 # Slack Clone - Real-time Messaging Application
 
-A full-featured Slack clone with real-time messaging, channels, direct messages, and more.
+A full-featured Slack clone with real-time messaging, workspaces, channels, and team collaboration features.
 
 ## 🚀 Live Demo
 
 - **Frontend**: https://slack-frontend-morphvm-4yh44846.http.cloud.morph.so
 - **Backend API**: https://slack-backend-morphvm-4yh44846.http.cloud.morph.so
+- **GitHub Repository**: https://github.com/tkfernlabs/slack-clone-realtime
 
-## 🎯 Test Account
+## ✨ Features
 
-- **Email**: demo@example.com
-- **Password**: password123
+### Core Functionality
+- **Real-time Messaging**: Instant message delivery using Socket.IO WebSockets
+- **Workspace Management**: Create and manage multiple workspaces
+- **Channel System**: Public and private channels for organized communication
+- **Direct Messaging**: One-on-one private conversations
+- **User Authentication**: Secure JWT-based authentication system
+- **Invite System**: Generate shareable invite links with custom expiry and usage limits
 
-## Features
+### Messaging Features
+- **Instant Updates**: Messages appear immediately without page refresh
+- **Rich Text Formatting**: Support for bold, italic, code blocks, and lists
+- **Emoji Support**: Full emoji picker and reactions
+- **Message Threading**: Reply to messages in threads
+- **Message Editing/Deletion**: Edit or delete your messages
+- **Typing Indicators**: See when others are typing
 
-- **Real-time Messaging**: Instant message delivery using Socket.IO
-- **Workspaces**: Create and manage multiple workspaces
-- **Channels**: Public and private channels for team communication
-- **Direct Messages**: Private conversations between users
-- **Thread Replies**: Organized discussions within messages
-- **Reactions**: Express yourself with emoji reactions
-- **User Presence**: See who's online in real-time
-- **Typing Indicators**: Know when someone is typing
-- **Message Editing & Deletion**: Edit or delete your messages
-- **User Status**: Set your status and status message
-- **Mentions**: @ mention users to get their attention
-- **File Sharing**: Upload and share files (coming soon)
-- **Search**: Search messages and users
-- **Authentication**: Secure JWT-based authentication
+### User Features
+- **User Profiles**: Customizable display names and avatars
+- **Online Presence**: See who's online in real-time
+- **Status Updates**: Set your availability status
+- **@Mentions**: Tag users in messages
+- **Search**: Search through messages and channels
 
-## Tech Stack
+## 🛠️ Tech Stack
+
+### Frontend
+- **React 18** with TypeScript
+- **Tailwind CSS v3** for styling
+- **Socket.IO Client** for real-time features
+- **React Router v6** for navigation
+- **Axios** for API calls
+- **React Hot Toast** for notifications
+- **Lucide React** for icons
 
 ### Backend
-- **Node.js** with Express.js
+- **Node.js** with Express
 - **PostgreSQL** (Neon) for database
-- **Socket.IO** for real-time communication
+- **Socket.IO** for WebSockets
 - **JWT** for authentication
 - **bcrypt** for password hashing
 
-### Frontend
-- **React** with TypeScript
-- **Socket.IO Client** for real-time updates
-- **Tailwind CSS** for styling
-- **React Router** for navigation
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
-
-### Workspaces
-- `GET /api/workspaces/my-workspaces` - Get user's workspaces
-- `POST /api/workspaces` - Create new workspace
-- `GET /api/workspaces/:id` - Get workspace details
-- `GET /api/workspaces/:id/members` - Get workspace members
-- `POST /api/workspaces/:id/join` - Join workspace
-
-### Channels
-- `GET /api/channels/workspace/:workspaceId` - Get workspace channels
-- `POST /api/channels` - Create new channel
-- `GET /api/channels/:id` - Get channel details
-- `GET /api/channels/:id/members` - Get channel members
-- `POST /api/channels/:id/join` - Join channel
-- `POST /api/channels/:id/leave` - Leave channel
-- `PUT /api/channels/:id` - Update channel
-
-### Messages
-- `GET /api/messages/channel/:channelId` - Get channel messages
-- `POST /api/messages` - Send message
-- `GET /api/messages/:messageId/thread` - Get thread messages
-- `PUT /api/messages/:id` - Edit message
-- `DELETE /api/messages/:id` - Delete message
-- `POST /api/messages/:id/reactions` - Add reaction
-- `DELETE /api/messages/:id/reactions/:emoji` - Remove reaction
-
-### Users
-- `GET /api/users/me` - Get current user
-- `GET /api/users/:id` - Get user by ID
-- `PUT /api/users/me` - Update profile
-- `PUT /api/users/me/status` - Update status
-- `GET /api/users/search/:workspaceId` - Search users
-- `POST /api/users/direct-message` - Create/get DM channel
-- `GET /api/users/direct-messages/:workspaceId` - Get user's DMs
-
-## WebSocket Events
-
-### Client to Server
-- `join_workspace` - Join a workspace room
-- `join_channel` - Join a channel room
-- `leave_channel` - Leave a channel room
-- `send_message` - Send a message
-- `edit_message` - Edit a message
-- `delete_message` - Delete a message
-- `typing_start` - Start typing indicator
-- `typing_stop` - Stop typing indicator
-- `add_reaction` - Add reaction to message
-- `remove_reaction` - Remove reaction
-- `update_status` - Update user status
-- `mark_read` - Mark channel as read
-
-### Server to Client
-- `new_message` - New message received
-- `message_edited` - Message was edited
-- `message_deleted` - Message was deleted
-- `user_typing` - User is typing
-- `user_stopped_typing` - User stopped typing
-- `reaction_added` - Reaction added
-- `reaction_removed` - Reaction removed
-- `user_online` - User came online
-- `user_offline` - User went offline
-- `user_status_changed` - User status changed
-- `thread_updated` - Thread has new reply
-- `mentioned` - You were mentioned
-
-## Environment Variables
-
-### Backend
-```
-DATABASE_URL=your_neon_database_url
-JWT_SECRET=your_jwt_secret
-PORT=5000
-NODE_ENV=production
-```
-
-### Frontend
-```
-REACT_APP_API_URL=your_backend_url
-REACT_APP_WS_URL=your_websocket_url
-```
-
-## 🎉 New Features & Fixes
-
-### Workspace Invites
-- Generate invite links with customizable expiry dates (1-30 days or never)
-- Set maximum usage limits for invite links
-- Track invite usage and manage active invites
-- Accessible via "Invite people" button in the sidebar
-
-### Real-time Messaging Improvements
-- Messages now sent via Socket.IO for instant updates
-- Fixed message synchronization issues
-- Optimized WebSocket connections for better performance
-
-### Recent Bug Fixes
-- Fixed SQL parameter binding errors in invite system
-- Resolved CORS issues between frontend and backend
-- Improved real-time message delivery without page refresh
-- Fixed invite generation with proper expiry handling
-
-## Deployment
-
-### Backend
-The backend is deployed at: https://slack-backend-morphvm-4yh44846.http.cloud.morph.so
-
-### Frontend
-The frontend is deployed at: https://slack-frontend-morphvm-4yh44846.http.cloud.morph.so
-
-## Getting Started
+## 📖 Getting Started
 
 ### Prerequisites
-- Node.js 20+
-- PostgreSQL (or Neon account)
+- Node.js 18+ 
+- PostgreSQL database (we use Neon)
 - npm or yarn
 
 ### Installation
 
-1. Clone the repository
-```bash
-git clone https://github.com/tkfernlabs/slack-clone-realtime.git
-cd slack-clone-realtime
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/tkfernlabs/slack-clone-realtime.git
+   cd slack-clone-realtime
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   npm install
+   
+   # Create .env file with:
+   # DATABASE_URL=your_postgres_connection_string
+   # JWT_SECRET=your_jwt_secret
+   # PORT=5000
+   # NODE_ENV=production
+   # FRONTEND_URL=https://your-frontend-url.com
+   
+   npm start
+   ```
+
+3. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   
+   # Create .env file with:
+   # REACT_APP_API_URL=https://your-backend-url.com
+   # REACT_APP_WS_URL=wss://your-backend-url.com
+   
+   npm run build
+   npm run start
+   ```
+
+## 💡 Usage Guide
+
+### Creating a Workspace
+1. Register/Login to the application
+2. Click "Create Workspace"
+3. Enter workspace name and details
+4. Your workspace is ready!
+
+### Inviting Team Members
+1. Click **"Invite people"** in the sidebar (purple button)
+2. Choose invite settings:
+   - **Expiry**: 1, 7, 14, 30 days, or never
+   - **Max uses**: Set a limit or leave unlimited
+3. Click **"Generate Invite Link"**
+4. Copy and share the link with team members
+5. New users can join by:
+   - Clicking the invite link
+   - Registering/logging in
+   - Automatically joining your workspace
+
+### Sending Messages
+1. Select a channel from the sidebar
+2. Type your message in the input field
+3. Press Enter to send
+4. Messages appear instantly for all channel members
+5. Use the formatting toolbar for rich text
+6. Add emojis with the emoji picker
+
+### Real-time Features
+- **Instant Messaging**: No refresh needed
+- **Live Typing Indicators**: See who's typing
+- **Presence Updates**: Online/offline status
+- **Real-time Reactions**: Instant emoji reactions
+
+## 🔧 Recent Updates & Fixes
+
+### Latest Improvements (Sept 2025)
+1. **Fixed Invite Link Generation**
+   - Invite links now use production URL instead of localhost
+   - Added FRONTEND_URL environment variable configuration
+   
+2. **Implemented Real-time Messaging**
+   - Messages appear instantly without page refresh
+   - WebSocket connections properly established
+   
+3. **Enhanced Invite System**
+   - Complete invite acceptance flow
+   - Handles authentication redirects
+   - Graceful handling of existing members
+
+4. **Auto-generation of Workspace URLs**
+   - Automatically creates unique URL slugs
+   - Prevents conflicts with existing workspaces
+
+## 🏗️ Project Structure
+
+```
+slack-clone/
+├── backend/
+│   ├── server.js           # Express server & Socket.IO
+│   ├── routes/             # API endpoints
+│   │   ├── auth.js         # Authentication routes
+│   │   ├── workspaces.js   # Workspace & invite management
+│   │   ├── channels.js     # Channel operations
+│   │   ├── messages.js     # Message handling
+│   │   └── users.js        # User management
+│   ├── middleware/         # Auth & error handling
+│   ├── db.js              # Database connection
+│   └── migrations/        # Database schemas
+│
+└── frontend/
+    ├── src/
+    │   ├── components/    # React components
+    │   │   ├── Auth/     # Login, Register, InviteAccept
+    │   │   └── Workspace/ # Main app components
+    │   ├── services/     # API & WebSocket services
+    │   ├── contexts/     # React contexts
+    │   └── types/        # TypeScript definitions
+    └── public/           # Static assets
 ```
 
-2. Install backend dependencies
-```bash
-cd backend
-npm install
-```
+## 📝 API Documentation
 
-3. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
+### Authentication Endpoints
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
 
-4. Run the backend
-```bash
-npm start
-```
+### Workspace Endpoints
+- `POST /api/workspaces` - Create workspace
+- `GET /api/workspaces` - List user's workspaces
+- `POST /api/workspaces/:id/invite` - Generate invite link
+- `POST /api/workspaces/join/:inviteCode` - Join via invite
 
-5. Install frontend dependencies
-```bash
-cd ../frontend
-npm install
-```
+### Channel Endpoints
+- `POST /api/channels` - Create channel
+- `GET /api/channels/:workspaceId` - List channels
+- `POST /api/channels/:id/join` - Join channel
 
-6. Run the frontend
-```bash
-npm start
-```
+### Message Endpoints
+- `POST /api/messages` - Send message
+- `GET /api/messages/:channelId` - Get channel messages
+- `PUT /api/messages/:id` - Edit message
+- `DELETE /api/messages/:id` - Delete message
 
-## License
+## 🤝 Contributing
 
-MIT
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🙏 Acknowledgments
+
+- Inspired by Slack's excellent UX/UI
+- Built with modern web technologies
+- Deployed on Morph's cloud infrastructure
+- Database powered by Neon PostgreSQL
+
+## 📧 Support
+
+For issues or questions, please open an issue on GitHub or contact the development team.
+
+---
+
+**Live Application**: Visit https://slack-frontend-morphvm-4yh44846.http.cloud.morph.so to try it out!
