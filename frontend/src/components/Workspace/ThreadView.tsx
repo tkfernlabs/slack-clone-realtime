@@ -52,10 +52,10 @@ const ThreadView: React.FC<ThreadViewProps> = ({ parentMessage, onClose }) => {
   };
 
   const cleanupSocketListeners = () => {
-    socketService.off('new_message');
-    socketService.off('message_edited');
-    socketService.off('message_deleted');
-    socketService.off('thread_updated');
+    socketService.off('new_message', handleNewMessage);
+    socketService.off('message_edited', handleMessageEdited);
+    socketService.off('message_deleted', handleMessageDeleted);
+    socketService.off('thread_updated', handleThreadUpdated);
   };
 
   const handleNewMessage = (message: Message) => {

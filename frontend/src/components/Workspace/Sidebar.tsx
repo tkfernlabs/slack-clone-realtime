@@ -42,27 +42,38 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
 
   useEffect(() => {
+    const loadDMs = async () => {
+      if (!workspace) return;
+      
+      try {
+        const response = await userApi.getDirectMessages(workspace.id);
+        setDirectMessages(response.data);
+      } catch (error) {
+        console.error('Error loading DMs:', error);
+      }
+    };
+    
     if (workspace) {
-      loadDirectMessages();
+      loadDMs();
       // Reload DMs every 30 seconds to keep them fresh
-      const interval = setInterval(loadDirectMessages, 30000);
+      const interval = setInterval(loadDMs, 30000);
       
       // Listen for new messages to update DM list
       const handleNewMessage = (message: any) => {
         // Reload DMs when a new message arrives in a DM channel
         if (message.channel_id) {
-          loadDirectMessages();
+          loadDMs();
         }
       };
       
       // Subscribe to socket events
       socketService.on('new_message', handleNewMessage);
-      socketService.on('dm_created', loadDirectMessages);
+      socketService.on('dm_created', loadDMs);
       
       return () => {
         clearInterval(interval);
         socketService.off('new_message', handleNewMessage);
-        socketService.off('dm_created', loadDirectMessages);
+        socketService.off('dm_created', loadDMs);
       };
     }
   }, [workspace]);
@@ -72,6 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     try {
       const response = await userApi.getDirectMessages(workspace.id);
+      console.log('Loaded DMs:', response.data);
       setDirectMessages(response.data);
     } catch (error) {
       console.error('Error loading DMs:', error);
@@ -294,8 +306,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           workspaceId={workspace.id}
           onClose={() => setShowDirectMessageModal(false)}
           onDirectMessageCreated={(dm) => {
-            setDirectMessages(prev => [dm, ...prev]);
-            onDirectMessageSelect?.(dm);
+            // Reload the full DM list to ensure it's properly sorted
+            loadDirectMessages();
+            // Then select the new DM
+            setTimeout(() => {
+              onDirectMessageSelect?.(dm);
+            }, 100);
           }}
         />
       )}
