@@ -50,7 +50,11 @@ const DirectMessageView: React.FC<DirectMessageViewProps> = ({
     setLoading(true);
     try {
       const response = await messageApi.getChannelMessages(directMessage.channel_id);
-      setMessages(response.data);
+      // Ensure we have an array of valid messages
+      const validMessages = Array.isArray(response.data) 
+        ? response.data.filter((msg: any) => msg && msg.created_at)
+        : [];
+      setMessages(validMessages);
       socketService.markRead(directMessage.channel_id);
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -108,8 +112,15 @@ const DirectMessageView: React.FC<DirectMessageViewProps> = ({
 
   const handleNewMessage = (data: any) => {
     if (data.channel_id === directMessage.channel_id) {
-      setMessages(prev => [...prev, data.message]);
-      scrollToBottom();
+      // Ensure the message has all required fields
+      if (data.message && data.message.created_at) {
+        setMessages(prev => [...prev, data.message]);
+        scrollToBottom();
+      } else {
+        console.warn('Received invalid message:', data);
+        // Reload messages to ensure consistency
+        loadMessages();
+      }
     }
   };
 

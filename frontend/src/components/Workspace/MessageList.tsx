@@ -78,11 +78,22 @@ const MessageList: React.FC<MessageListProps> = ({
 
   // Group messages by date
   const groupedMessages = messages.reduce((groups: any, message) => {
-    const date = new Date(message.created_at).toDateString();
-    if (!groups[date]) {
-      groups[date] = [];
+    // Skip if message is undefined or doesn't have created_at
+    if (!message || !message.created_at) {
+      console.warn('Skipping invalid message:', message);
+      return groups;
     }
-    groups[date].push(message);
+    
+    try {
+      const date = new Date(message.created_at).toDateString();
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(message);
+    } catch (error) {
+      console.error('Error processing message date:', error, message);
+    }
+    
     return groups;
   }, {});
 
