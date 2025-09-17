@@ -6,8 +6,21 @@ const router = express.Router();
 // Create workspace
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, url_slug, icon_url } = req.body;
+    const { name, icon_url } = req.body;
+    let { url_slug } = req.body;
     const userId = req.userId;
+
+    // Generate url_slug from name if not provided
+    if (!url_slug) {
+      url_slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 50);
+      
+      // Add random suffix to ensure uniqueness
+      url_slug = `${url_slug}-${Math.random().toString(36).substring(2, 8)}`;
+    }
 
     // Check if url_slug is unique
     const existing = await db.query(
